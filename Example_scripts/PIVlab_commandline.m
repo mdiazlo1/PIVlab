@@ -1,4 +1,4 @@
-function PIVLab_commandline(images,settings)
+function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings)
 % Example script how to use PIVlab from the commandline
 % Just run this script to see what it does.
 % You can adjust the settings in "s" and "p", specify a mask and a region of interest
@@ -16,19 +16,19 @@ if nr_of_cores > 1
 	end
 end
 
-
+amount = size(images,3);
 %% Standard PIV Settings
 s = cell(15,2); % To make it more readable, let's create a "settings table"
 %Parameter                          %Setting			%Options
-s{1,1}= 'Int. area 1';              s{1,2}=64;			% window size of first pass
-s{2,1}= 'Step size 1';              s{2,2}=32;			% step of first pass
+s{1,1}= 'Int. area 1';              s{1,2}=settings.W1;			% window size of first pass
+s{2,1}= 'Step size 1';              s{2,2}=settings.StepSize;			% step of first pass
 s{3,1}= 'Subpix. finder';           s{3,2}=1;			% 1 = 3point Gauss, 2 = 2D Gauss
 s{4,1}= 'Mask';                     s{4,2}=[];			% If needed, supply a binary image mask with the same size as the PIV images
 s{5,1}= 'ROI';                      s{5,2}=[];			% Region of interest: [x,y,width,height] in pixels, may be left empty to process the whole image
-s{6,1}= 'Nr. of passes';            s{6,2}=2;			% 1-4 nr. of passes
-s{7,1}= 'Int. area 2';              s{7,2}=32;			% second pass window size
-s{8,1}= 'Int. area 3';              s{8,2}=16;			% third pass window size
-s{9,1}= 'Int. area 4';              s{9,2}=16;			% fourth pass window size
+s{6,1}= 'Nr. of passes';            s{6,2}=settings.NumPass;			% 1-4 nr. of passes
+s{7,1}= 'Int. area 2';              s{7,2}=settings.W2;			% second pass window size
+s{8,1}= 'Int. area 3';              s{8,2}=settings.W3;			% third pass window size
+s{9,1}= 'Int. area 4';              s{9,2}=settings.W4;			% fourth pass window size
 s{10,1}='Window deformation';       s{10,2}='*linear';	% '*spline' is more accurate, but slower
 s{11,1}='Repeated Correlation';     s{11,2}=0;			% 0 or 1 : Repeat the correlation four times and multiply the correlation matrices.
 s{12,1}='Disable Autocorrelation';  s{12,2}=0;			% 0 or 1 : Disable Autocorrelation in the first pass.
@@ -37,7 +37,7 @@ s{14,1}='Repeat last pass';			s{14,2}=0;			% 0 or 1 : Repeat the last pass of a 
 s{15,1}='Last pass quality slope';  s{15,2}=0.025;		% Repetitions of last pass will stop when the average difference to the previous pass is less than this number.
 
 
-%% Standard image preprocessing settings
+%% Standard image preprocessing settings (not used)
 p = cell(10,1);
 %Parameter                       %Setting           %Options
 p{1,1}= 'ROI';                   p{1,2}=s{5,2};     % same as in PIV settings
@@ -52,7 +52,7 @@ p{9,1}= 'Minimum intensity';     p{9,2}=0.0;        % Minimum intensity of input
 p{10,1}='Maximum intensity';     p{10,2}=1.0;       % Maximum intensity on input image (1 = no change)
 
 %% other settings
-pairwise = 1; % 0 for [A+B], [B+C], [C+D]... sequencing style, and 1 for [A+B], [C+D], [E+F]... sequencing style
+pairwise = settings.Type; % 0 for [A+B], [B+C], [C+D]... sequencing style, and 1 for [A+B], [C+D], [E+F]... sequencing style
 
 %% PIV analysis loop
 if pairwise == 1
@@ -99,7 +99,7 @@ if nr_of_cores > 1
 	parfor i=1:size(slicedfilename1,2)  % index must increment by 1
 
 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
-			piv.piv_analysis(directory, slicedfilename1{i}, slicedfilename2{i},p,s,nr_of_cores,false);
+			piv.piv_analysis(directory, slicedfilename1{i}, slicedfilename2{i},s,nr_of_cores,false);
 	end
 else % sequential loop
 
@@ -120,12 +120,12 @@ end
 
 r = cell(6,1);
 %Parameter     %Setting                                     %Options
-r{1,1}= 'Calibration factor, 1 for uncalibrated data';      r{1,2}=1;                   % Calibration factor for u
-r{2,1}= 'Calibration factor, 1 for uncalibrated data';      r{2,2}=1;                   % Calibration factor for v
-r{3,1}= 'Valid velocities [u_min; u_max; v_min; v_max]';    r{3,2}=[-50; 50; -50; 50];  % Maximum allowed velocities, for uncalibrated data: maximum displacement in pixels
-r{4,1}= 'Stdev check?';                                     r{4,2}=1;                   % 1 = enable global standard deviation test
+r{1,1}= 'Calibration factor, 1 for uncalibrated data';      r{1,2}=settings.UCal;                   % Calibration factor for u
+r{2,1}= 'Calibration factor, 1 for uncalibrated data';      r{2,2}=settings.VCal;                   % Calibration factor for v
+r{3,1}= 'Valid velocities [u_min; u_max; v_min; v_max]';    r{3,2}=settings.ValVel;  % Maximum allowed velocities, for uncalibrated data: maximum displacement in pixels
+r{4,1}= 'Stdev check?';                                     r{4,2}=0;                   % 1 = enable global standard deviation test
 r{5,1}= 'Stdev threshold';                                  r{5,2}=7;                   % Threshold for the stdev test
-r{6,1}= 'Local median check?';                              r{6,2}=1;                   % 1 = enable local median test
+r{6,1}= 'Local median check?';                              r{6,2}=0;                   % 1 = enable local median test
 r{7,1}= 'Local median threshold';                           r{7,2}=3;                   % Threshold for the local median test
 
 u_filt=cell(size(u));
@@ -171,6 +171,8 @@ save(fullfile(directory, [filenames{1} '_' filenames{end} '_' num2str(amount) '_
 %%
 clearvars -except p s r x y u v typevector directory filenames u_filt v_filt typevector_filt correlation_map
 disp('DONE.')
+
+end
 
 function [u_filt, v_filt,typevector_filt] = post_proc_wrapper(u,v,typevector,post_proc_setting,paint_nan)
 % wrapper function for postproc.PIVlab_postproc
