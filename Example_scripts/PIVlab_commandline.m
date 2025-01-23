@@ -1,3 +1,4 @@
+function PIVLab_commandline(images,settings)
 % Example script how to use PIVlab from the commandline
 % Just run this script to see what it does.
 % You can adjust the settings in "s" and "p", specify a mask and a region of interest
@@ -14,18 +15,7 @@ if nr_of_cores > 1
 		nr_of_cores = 1;
 	end
 end
-%% Create list of images inside user specified directory
-directory= fullfile(fileparts(fileparts(which('PIVlab_commandline.m'))),'Example_data') ; %directory containing the images you want to analyze
-% Note that I dont find an easy way to select the PIVlab\Example_data folder
 
-addpath(fileparts(fileparts(which('PIVlab_commandline.m')))); %add the PIVlab folder to search path
-
-suffix='*.jpg'; %*.bmp or *.tif or *.jpg or *.tiff or *.jpeg
-disp(['Looking for ' suffix ' files in the selected directory.']);
-direc = dir([directory,filesep,suffix]); filenames={};
-[filenames{1:length(direc),1}] = deal(direc.name);
-filenames = sortrows(filenames); %sort all image files
-amount = length(filenames);
 
 %% Standard PIV Settings
 s = cell(15,2); % To make it more readable, let's create a "settings table"
@@ -51,7 +41,7 @@ s{15,1}='Last pass quality slope';  s{15,2}=0.025;		% Repetitions of last pass w
 p = cell(10,1);
 %Parameter                       %Setting           %Options
 p{1,1}= 'ROI';                   p{1,2}=s{5,2};     % same as in PIV settings
-p{2,1}= 'CLAHE';                 p{2,2}=1;          % 1 = enable CLAHE (contrast enhancement), 0 = disable
+p{2,1}= 'CLAHE';                 p{2,2}=0;          % 1 = enable CLAHE (contrast enhancement), 0 = disable
 p{3,1}= 'CLAHE size';            p{3,2}=50;         % CLAHE window size
 p{4,1}= 'Highpass';              p{4,2}=0;          % 1 = enable highpass, 0 = disable
 p{5,1}= 'Highpass size';         p{5,2}=15;         % highpass size
