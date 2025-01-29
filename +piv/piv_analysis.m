@@ -1,5 +1,5 @@
 function [x, y, u, v, typevec,corr_map] = piv_analysis(image1,image2,...
-    piv_setting,nr_of_cores,graph)
+    PairNum,piv_setting,nr_of_cores,graph)
     % wrapper function to do PIV preprocess and PIV fft for a pair of image
 
     % INPUT
@@ -70,7 +70,7 @@ function [x, y, u, v, typevec,corr_map] = piv_analysis(image1,image2,...
         quiver(x,y,u,v,'g','AutoScaleFactor', 1.5);
         hold off;
         axis image;
-        title(['Raw result ' filename1],'interpreter','none')
+        title(['Raw result ' num2str(PairNum)],'interpreter','none')
         set(gca,'xtick',[],'ytick',[])
         drawnow;
         

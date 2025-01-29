@@ -1,8 +1,8 @@
-function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings)
+function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings,SaveDirectory)
 % Example script how to use PIVlab from the commandline
 % Just run this script to see what it does.
 % You can adjust the settings in "s" and "p", specify a mask and a region of interest
-clc; clear
+
 
 nr_of_cores = 1; % integer, 1 means single core, greater than 1 means parallel
 if nr_of_cores > 1
@@ -60,7 +60,6 @@ if pairwise == 1
 		disp('Image folder should contain an even number of images.')
 		%remove last image from list
 		amount=amount-1;
-		filenames(size(filenames,1))=[];
 	end
 
 	disp(['Found ' num2str(amount) ' images (' num2str(amount/2) ' image pairs).'])
@@ -79,34 +78,24 @@ end
 typevector=x; %typevector will be 1 for regular vectors, 0 for masked areas
 correlation_map=x; % correlation coefficient
 
-%% Pre-load the image names out side of the parallelizable loop
-slicedfilename1=cell(0);
-slicedfilename2=cell(0);
-j = 1;
-for i=1:1+pairwise:amount-1
-	slicedfilename1{j}=filenames{i}; % begin
-	slicedfilename2{j}=filenames{i+1}; % end
-	j = j+1;
-end
-
 %% Main PIV analysis loop:
 % parallel
+ImgPairNum = amount/2;
+
 if nr_of_cores > 1
 	if misc.pivparpool('size')<nr_of_cores
 		misc.pivparpool('open',nr_of_cores);
 	end
-
-	parfor i=1:size(slicedfilename1,2)  % index must increment by 1
-
+    
+	parfor i=1:ImgPairNum  % index must increment by 1
 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
-			piv.piv_analysis(directory, slicedfilename1{i}, slicedfilename2{i},s,nr_of_cores,false);
+			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
 	end
 else % sequential loop
-
-	for i=1:size(slicedfilename1,2)  % index must increment by 1
+	for i=1:ImgPairNum  % index must increment by 1
 
 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
-			piv.piv_analysis(directory, slicedfilename1{i}, slicedfilename2{i},p,s,nr_of_cores,true);
+			piv.piv_analysis(images(:,:,i), images(:,:,i+1),i,s,nr_of_cores,true);
 
 		disp([int2str((i+1)/amount*100) ' %']);
 
@@ -166,7 +155,7 @@ end
 %}
 %%
 % Save the data to a Matlab file
-save(fullfile(directory, [filenames{1} '_' filenames{end} '_' num2str(amount) '_frames_result_.mat']));
+save(fullfile(SaveDirectory, 'frames_result_.mat'));
 
 %%
 clearvars -except p s r x y u v typevector directory filenames u_filt v_filt typevector_filt correlation_map
