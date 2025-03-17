@@ -24,7 +24,7 @@ s{1,1}= 'Int. area 1';              s{1,2}=settings.W1;			% window size of first
 s{2,1}= 'Step size 1';              s{2,2}=settings.StepSize;			% step of first pass
 s{3,1}= 'Subpix. finder';           s{3,2}=1;			% 1 = 3point Gauss, 2 = 2D Gauss
 s{4,1}= 'Mask';                     s{4,2}=[];			% If needed, supply a binary image mask with the same size as the PIV images
-s{5,1}= 'ROI';                      s{5,2}=[];			% Region of interest: [x,y,width,height] in pixels, may be left empty to process the whole image
+s{5,1}= 'ROI';                      s{5,2}=settings.ROI;			% Region of interest: [x,y,width,height] in pixels, may be left empty to process the whole image
 s{6,1}= 'Nr. of passes';            s{6,2}=settings.NumPass;			% 1-4 nr. of passes
 s{7,1}= 'Int. area 2';              s{7,2}=settings.W2;			% second pass window size
 s{8,1}= 'Int. area 3';              s{8,2}=settings.W3;			% third pass window size
