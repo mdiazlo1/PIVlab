@@ -87,13 +87,13 @@ if nr_of_cores > 1
 		misc.pivparpool('open',nr_of_cores);
 	end
     
-	parfor i=1:ImgPairNum  % index must increment by 1
+	parfor i=1:amount  % index must increment by 1
 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
 			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
 	end
 else % sequential loop
-	for i=1:ImgPairNum  % index must increment by 1
-
+	for i=1:amount % index must increment by 1
+        
 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
 			piv.piv_analysis(images(:,:,i), images(:,:,i+1),i,s,nr_of_cores,true);
 
