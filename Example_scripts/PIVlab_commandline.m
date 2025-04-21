@@ -6,14 +6,14 @@ function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings,SaveDirect
 
 nr_of_cores = 1; % integer, 1 means single core, greater than 1 means parallel
 if nr_of_cores > 1
-	try
-		local_cluster=parcluster('local'); % single node
-		corenum =  local_cluster.NumWorkers ; % fix : get the number of cores available
-	catch
-		warning('on');
-		warning('parallel local cluster can not be created, assigning number of cores to 1');
-		nr_of_cores = 1;
-	end
+    try
+        local_cluster=parcluster('local'); % single node
+        corenum =  local_cluster.NumWorkers ; % fix : get the number of cores available
+    catch
+        warning('on');
+        warning('parallel local cluster can not be created, assigning number of cores to 1');
+        nr_of_cores = 1;
+    end
 end
 
 amount = size(images,3);
@@ -56,23 +56,23 @@ pairwise = settings.Type; % 0 for [A+B], [B+C], [C+D]... sequencing style, and 1
 
 %% PIV analysis loop
 if pairwise == 1
-	if mod(amount,2) == 1 %Uneven number of images?
-		disp('Image folder should contain an even number of images.')
-		%remove last image from list
-		amount=amount-1;
-	end
+    if mod(amount,2) == 1 %Uneven number of images?
+        disp('Image folder should contain an even number of images.')
+        %remove last image from list
+        amount=amount-1;
+    end
 
-	disp(['Found ' num2str(amount) ' images (' num2str(amount/2) ' image pairs).'])
-	x=cell(amount/2,1);
-	y=x;
-	u=x;
-	v=x;
+    disp(['Found ' num2str(amount) ' images (' num2str(amount/2) ' image pairs).'])
+    x=cell(amount/2,1);
+    y=x;
+    u=x;
+    v=x;
 else
-	disp(['Found ' num2str(amount) ' images'])
-	x=cell(amount-1,1);
-	y=x;
-	u=x;
-	v=x;
+    disp(['Found ' num2str(amount) ' images'])
+    x=cell(amount-1,1);
+    y=x;
+    u=x;
+    v=x;
 end
 
 typevector=x; %typevector will be 1 for regular vectors, 0 for masked areas
@@ -82,24 +82,23 @@ correlation_map=x; % correlation coefficient
 % parallel
 ImgPairNum = amount/2;
 
-if nr_of_cores > 1
-	if misc.pivparpool('size')<nr_of_cores
-		misc.pivparpool('open',nr_of_cores);
-	end
-    
-	parfor i=1:amount  % index must increment by 1
-		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
-			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
-	end
-else % sequential loop
-	for i=1:amount % index must increment by 1
-        
-		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
-			piv.piv_analysis(images(:,:,i), images(:,:,i+1),i,s,nr_of_cores,true);
+% if nr_of_cores > 1
+% 	if misc.pivparpool('size')<nr_of_cores
+% 		misc.pivparpool('open',nr_of_cores);
+% 	end
+%
+% 	parfor i=1:amount  % index must increment by 1
+% 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
+% 			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
+% 	end % sequential loop
+for i=1:2:amount % index must increment by 1
 
-		disp([int2str((i+1)/amount*100) ' %']);
+    [x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
+        piv.piv_analysis(images(:,:,i), images(:,:,i+1),i,s,nr_of_cores,true);
 
-	end
+    disp([int2str((i)/amount*100) ' %']);
+
+end
 end
 
 % The most important results are x,y,u,v. These can now be validated
@@ -123,25 +122,25 @@ typevector_filt=typevector;
 
 if nr_of_cores >1 % parallel loop
 
-	if misc.pivparpool('size')<nr_of_cores
-		misc.pivparpool('open',nr_of_cores);
-	end
+    if misc.pivparpool('size')<nr_of_cores
+        misc.pivparpool('open',nr_of_cores);
+    end
 
-	parfor PIVresult=1:size(x,1)
+    parfor PIVresult=1:size(x,1)
 
-		[u_filt{PIVresult,1}, v_filt{PIVresult,1},typevector_filt{PIVresult,1}]= ...
-			post_proc_wrapper(u{PIVresult,1},v{PIVresult,1},typevector{PIVresult,1},r,true);
+        [u_filt{PIVresult,1}, v_filt{PIVresult,1},typevector_filt{PIVresult,1}]= ...
+            post_proc_wrapper(u{PIVresult,1},v{PIVresult,1},typevector{PIVresult,1},r,true);
 
-	end
+    end
 
 else % sequential loop
 
-	for PIVresult=1:size(x,1)
+    for PIVresult=1:size(x,1)
 
-		[u_filt{PIVresult,1}, v_filt{PIVresult,1},typevector_filt{PIVresult,1}]= ...
-			post_proc_wrapper(u{PIVresult,1},v{PIVresult,1},typevector{PIVresult,1},r,true);
+        [u_filt{PIVresult,1}, v_filt{PIVresult,1},typevector_filt{PIVresult,1}]= ...
+            post_proc_wrapper(u{PIVresult,1},v{PIVresult,1},typevector{PIVresult,1},r,true);
 
-	end
+    end
 
 end
 
@@ -178,13 +177,13 @@ function [u_filt, v_filt,typevector_filt] = post_proc_wrapper(u,v,typevector,pos
 
 
 [u_filt,v_filt] = postproc.PIVlab_postproc(u,v, ...
-	post_proc_setting{1,2},...
-	post_proc_setting{2,2},...
-	post_proc_setting{3,2},...
-	post_proc_setting{4,2},...
-	post_proc_setting{5,2},...
-	post_proc_setting{6,2},...
-	post_proc_setting{7,2});
+    post_proc_setting{1,2},...
+    post_proc_setting{2,2},...
+    post_proc_setting{3,2},...
+    post_proc_setting{4,2},...
+    post_proc_setting{5,2},...
+    post_proc_setting{6,2},...
+    post_proc_setting{7,2});
 
 typevector_filt = typevector; % initiate
 typevector_filt(isnan(u_filt))=2;
@@ -192,8 +191,8 @@ typevector_filt(isnan(v_filt))=2;
 typevector_filt(typevector==0)=0; %restores typevector for mask
 
 if paint_nan
-	u_filt=misc.inpaint_nans(u_filt,4);
-	v_filt=misc.inpaint_nans(v_filt,4);
+    u_filt=misc.inpaint_nans(u_filt,4);
+    v_filt=misc.inpaint_nans(v_filt,4);
 end
 
 
