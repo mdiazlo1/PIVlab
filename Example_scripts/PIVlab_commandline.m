@@ -1,4 +1,4 @@
-function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings,SaveDirectory)
+function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings)
 % Example script how to use PIVlab from the commandline
 % Just run this script to see what it does.
 % You can adjust the settings in "s" and "p", specify a mask and a region of interest
@@ -99,8 +99,10 @@ for i=1:2:amount % index must increment by 1
     disp([int2str((i)/amount*100) ' %']);
 
 end
-end
-
+x = x(~cellfun('isempty',x)); y = y(~cellfun('isempty',y));
+u = u(~cellfun('isempty',u)); v = v(~cellfun('isempty',v));
+typevector = typevector(~cellfun('isempty',typevector));
+correlation_map = correlation_map(~cellfun('isempty',correlation_map));
 % The most important results are x,y,u,v. These can now be validated
 
 %% PIV postprocessing loop
@@ -154,14 +156,13 @@ end
 %}
 %%
 % Save the data to a Matlab file
-save(fullfile(SaveDirectory, 'frames_result_.mat'));
+% save(fullfile(SaveDirectory, 'frames_result_.mat'));
 
 %%
 clearvars -except p s r x y u v typevector directory filenames u_filt v_filt typevector_filt correlation_map
 disp('DONE.')
 
 end
-
 function [u_filt, v_filt,typevector_filt] = post_proc_wrapper(u,v,typevector,post_proc_setting,paint_nan)
 % wrapper function for postproc.PIVlab_postproc
 
