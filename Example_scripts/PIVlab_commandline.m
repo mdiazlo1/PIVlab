@@ -4,7 +4,7 @@ function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings)
 % You can adjust the settings in "s" and "p", specify a mask and a region of interest
 
 
-nr_of_cores = 1; % integer, 1 means single core, greater than 1 means parallel
+nr_of_cores = 2; % integer, 1 means single core, greater than 1 means parallel
 if nr_of_cores > 1
     try
         local_cluster=parcluster('local'); % single node
@@ -82,15 +82,20 @@ correlation_map=x; % correlation coefficient
 % parallel
 ImgPairNum = amount/2;
 
-% if nr_of_cores > 1
-% 	if misc.pivparpool('size')<nr_of_cores
-% 		misc.pivparpool('open',nr_of_cores);
-% 	end
-%
-% 	parfor i=1:amount  % index must increment by 1
-% 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
-% 			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
-% 	end % sequential loop
+if nr_of_cores > 1
+	if misc.pivparpool('size')<nr_of_cores
+		misc.pivparpool('open',nr_of_cores);
+	end
+
+	parfor i = 1:amount  % index must increment by 1
+        if rem(i,2)
+		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
+			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
+        else
+            continue
+        end
+	end % sequential loop
+else
 for i=1:2:amount % index must increment by 1
 
     [x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
@@ -98,6 +103,7 @@ for i=1:2:amount % index must increment by 1
 
     disp([int2str((i)/amount*100) ' %']);
 
+end
 end
 x = x(~cellfun('isempty',x)); y = y(~cellfun('isempty',y));
 u = u(~cellfun('isempty',u)); v = v(~cellfun('isempty',v));

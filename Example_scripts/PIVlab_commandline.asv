@@ -1,4 +1,4 @@
-function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings,SaveDirectory)
+function [x,y,u,v,u_filt,v_filt] = PIVlab_commandline(images,settings)
 % Example script how to use PIVlab from the commandline
 % Just run this script to see what it does.
 % You can adjust the settings in "s" and "p", specify a mask and a region of interest
@@ -82,15 +82,15 @@ correlation_map=x; % correlation coefficient
 % parallel
 ImgPairNum = amount/2;
 
-% if nr_of_cores > 1
-% 	if misc.pivparpool('size')<nr_of_cores
-% 		misc.pivparpool('open',nr_of_cores);
-% 	end
-%
-% 	parfor i=1:amount  % index must increment by 1
-% 		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
-% 			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
-% 	end % sequential loop
+if nr_of_cores > 1
+	if misc.pivparpool('size')<nr_of_cores
+		misc.pivparpool('open',nr_of_cores);
+	end
+
+	parfor i=1:amount  % index must increment by 1
+		[x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
+			piv.piv_analysis(images(:,:,i),images(:,:,i+1),i,s,nr_of_cores,false);
+	end % sequential loop
 for i=1:2:amount % index must increment by 1
 
     [x{i}, y{i}, u{i}, v{i}, typevector{i},correlation_map{i}] = ...
@@ -99,8 +99,10 @@ for i=1:2:amount % index must increment by 1
     disp([int2str((i)/amount*100) ' %']);
 
 end
-x = x(~cellfun('isempty',x)); y = y()
-
+x = x(~cellfun('isempty',x)); y = y(~cellfun('isempty',y));
+u = u(~cellfun('isempty',u)); v = v(~cellfun('isempty',v));
+typevector = typevector(~cellfun('isempty',typevector));
+correlation_map = correlation_map(~cellfun('isempty',correlation_map));
 % The most important results are x,y,u,v. These can now be validated
 
 %% PIV postprocessing loop
@@ -154,7 +156,7 @@ end
 %}
 %%
 % Save the data to a Matlab file
-save(fullfile(SaveDirectory, 'frames_result_.mat'));
+% save(fullfile(SaveDirectory, 'frames_result_.mat'));
 
 %%
 clearvars -except p s r x y u v typevector directory filenames u_filt v_filt typevector_filt correlation_map
